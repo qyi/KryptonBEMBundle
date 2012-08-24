@@ -14,5 +14,5 @@ Features
 Installation
 ------------
 
-All the installation instructions are located in [documentation](https://github.com/zzzz/KryptonBEMBundle/blob/master/Resources/doc/installation.md).
-As run example instructions are located in [documentation](https://github.com/zzzz/KryptonBEMBundle/blob/master/Resources/doc/example.md).
+All the installation instructions are located in [documentation](https://github.com/qyi/KryptonBEMBundle/blob/master/Resources/doc/installation.md).
+As run example instructions are located in [documentation](https://github.com/qyi/KryptonBEMBundle/blob/master/Resources/doc/example.md).
