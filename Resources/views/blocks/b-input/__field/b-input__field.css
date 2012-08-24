@@ -1,0 +1,12 @@
+.b-input__field:focus
+{
+    background-color: #FFFEA7;
+}
+
+.b-input__field
+{
+    background-color: white;
+    margin-bottom: 10px;
+    border: 1px solid #D2D2D2;
+    padding: 8px 3px 8px 5px;
+}

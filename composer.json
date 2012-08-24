@@ -1,0 +1,47 @@
+{
+    "name": "krypton/bembundle",
+    "type": "symfony-bundle",
+    "description": "",
+    "keywords": ["bem"],
+    "homepage": "http://krypton.whysofast.com",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andrey Linko",
+            "email": "su2ny@mail.ru"
+        }
+    ],
+
+    "require": {
+	    "php": ">=5.3.3",
+        "bem/bem-bl":   "master"
+    },
+    
+    "require-dev": {
+        "php":                              ">=5.3.3",
+        "symfony/symfony":                  "2.1.*",
+        "sensio/framework-extra-bundle":    "*",
+        "doctrine/common":                  "2.3.*"  
+    },
+    
+    "repositories": [
+        {
+	        "type": "package",
+            "package": {
+                "version": "master",
+                "name": "bem/bem-bl",
+                "source": {
+                    "url": "https://github.com/bem/bem-bl.git",
+                    "type": "git",
+                    "reference": "master"
+                }
+            }
+        }
+    ],
+
+    "autoload": {
+        "psr-0": { "Krypton\\BEMBundle": "" }
+    },
+
+    "target-dir": "Krypton/BEMBundle"
+}

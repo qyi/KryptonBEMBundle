@@ -1,0 +1,27 @@
+parameters:
+    bem.assetic.filter.html.class:    Krypton\BEMBundle\Filter\BEMHtmlFilter
+    bem.assetic.filter.css.class:	Krypton\BEMBundle\Filter\BEMCssFilter
+    bem.assetic.filter.js.class:    Krypton\BEMBundle\Filter\BEMJsFilter
+    bem.assetic.filter.bin: /usr/local/bin/bem
+
+services:
+    bem.assetic.filter.html:
+        class:  %bem.assetic.filter.html.class%
+        arguments:  [%bem.assetic.filter.bin%, %assetic.node.bin%, %bem.levels%]
+        calls:
+            - [ setBemBlPath, [ %bem.bem_bl% ] ]
+            - [ setNodeModulesPath, [ %bem.node_modules% ] ]
+        tags:
+            - { name: assetic.filter, alias: bemhtml }
+
+    bem.assetic.filter.css:
+        class:  %bem.assetic.filter.css.class%
+        arguments:  [%bem.assetic.filter.bin%, %assetic.node.bin%, %bem.levels%]
+        tags:
+            - { name: assetic.filter, alias: bemcss }
+
+    bem.assetic.filter.js:
+        class:  %bem.assetic.filter.js.class%
+        arguments:  [%bem.assetic.filter.bin%, %assetic.node.bin%, %bem.levels%]
+        tags:
+            - { name: assetic.filter, alias: bemjs }

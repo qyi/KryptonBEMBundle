@@ -1,0 +1,39 @@
+parameters:
+    bem.class: Krypton\BEMBundle\BEM
+    bem.twig.lexer.class: Krypton\BEMBundle\Twig\Lexer
+    bem.formula_loader.class: Krypton\BEMBundle\Extension\BEMFormulaLoader
+    templating.engine.bem.class: Krypton\BEMBundle\BEMEngine
+
+services:
+    bem:
+        class: %bem.class%
+        arguments:
+            - @service_container
+            - @templating.name_parser
+            - @assetic.asset_factory
+
+    bem.twig.lexer:
+        class: %bem.twig.lexer.class%
+        arguments: [@bem]
+
+    templating.engine.bem:
+        class: %templating.engine.bem.class%
+        arguments: [@templating.engine.twig, @templating.name_parser]
+
+    bem.twig:
+        class: %twig.class%
+        factory_class: Krypton\BEMBundle\Twig\Factory
+        factory_method: factory
+        arguments:
+            -   ''
+            -   @bem.twig.lexer
+
+    assetic.bem_formula_loader:
+        class: %bem.formula_loader.class%
+        public: false
+        tags:
+            - { name: assetic.formula_loader, alias: bem }
+        arguments:
+            -   @assetic.asset_factory
+            -   @templating.name_parser
+            -   @twig

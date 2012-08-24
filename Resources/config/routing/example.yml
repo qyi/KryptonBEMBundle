@@ -1,0 +1,6 @@
+
+krypton_bem_template_example:
+    pattern:  /bem/example
+    defaults: { _controller: KryptonBEMBundle:Example:example }
+    requirements:
+        _method: GET

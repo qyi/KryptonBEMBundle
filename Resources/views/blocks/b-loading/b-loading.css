@@ -1,0 +1,10 @@
+.b-loading
+{
+    background: url('/bundles/loading.gif') no-repeat;
+    padding-left: 30px;
+    padding-top: 3px;
+    height: 30px;
+    float: left;
+    margin-left: 10px;
+    display: none;
+}

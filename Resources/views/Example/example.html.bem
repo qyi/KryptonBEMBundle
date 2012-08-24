@@ -1,0 +1,17 @@
+({
+    block: 'b-page',
+    title: 'Bem example',
+    head: [
+        { elem: 'css', url: '_example.css'},
+        { block: 'i-jquery', elem: 'core' },
+        { elem: 'js', url: 'example.js' }
+    ],
+    content: [
+        {
+            block: 'b-link',
+            url: '#',
+            title: 'Click me',
+            content : 'Example link'
+        }
+    ]
+})

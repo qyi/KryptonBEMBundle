@@ -1,0 +1,14 @@
+block b-input, elem label {
+
+    tag: 'label'
+
+    attrs: {
+        var a = {};
+
+        if (this.ctx.name) { 
+            a['for'] = this.ctx.name;
+        };
+
+        return a;
+    }
+}

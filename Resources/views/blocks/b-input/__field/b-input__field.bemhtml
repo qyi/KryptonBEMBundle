@@ -1,0 +1,27 @@
+block b-input, elem field {
+
+    tag: 'input'
+
+    js: true
+
+    attrs: {
+        var a = {
+            type: this.ctx.type ? this.ctx.type : 'text'
+        };
+
+        if (this.ctx.name) { 
+            a['name'] = this.ctx.name;
+        };
+
+        if (this.ctx.placeholder) { 
+            a['placeholder'] = this.ctx.placeholder;
+        };
+
+	if (this.ctx.value) {
+	    a['value'] = this.ctx.value;
+	}
+
+        return a;
+    }
+
+}

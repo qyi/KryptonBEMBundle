@@ -1,0 +1,236 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project name="KryptonBEMbundle Build" default="build" basedir="./">    
+  <target name="build" depends="prepare,bootstrap,quality" />
+    
+    <property name="build" value="${basedir}/.build" />
+    <available file="${basedir}/phpunit_to_junit.xsl" property="phpunit_to_junit" />      
+
+    <target name="prepare">
+      <delete dir="${build}" />
+      
+      <mkdir dir="${build}" />
+      <mkdir dir="${build}/doc" />
+      <mkdir dir="${build}/logs" />
+      <mkdir dir="${build}/logs/pdepend" />
+      <mkdir dir="${build}/coverage" />
+    </target>
+
+    <target name="bootstrap">
+      <exec executable="chef-client" failonerror="true">
+        <env key="build.workingDir" value="${basedir}" />
+        <arg line="-o 'recipe[symfony::test]'" />
+      </exec>
+      <exec executable="composer" failonerror="true">
+        <arg line="update" />
+        <arg line="--dev" />
+        <arg line="--verbose" />
+      </exec>
+      <exec executable="php" failonerror="true" osfamily="unix">
+        <arg line="Tests/app/console" />
+        <arg line="doctrine:schema:create" />
+      </exec>
+      <exec executable="php" failonerror="true" osfamily="unix">
+        <arg line="Tests/app/console" />
+        <arg line="doctrine:fixture:load" />
+      </exec>
+      <exec executable="php" failonerror="true" osfamily="unix">
+        <arg line="Tests/app/console" />
+        <arg line="cache:clear" />
+        <arg line="--env=dev" />
+      </exec>
+    </target>
+
+    <target name="prepare-database">
+        <exec executable="php">
+            <arg line="Tests/app/console" />
+            <arg line="doctrine:database:drop" />
+            <arg line="--force" />
+        </exec>
+        <exec executable="php">
+            <arg line="Tests/app/console" />
+            <arg line="doctrine:database:create" />
+        </exec>
+        <exec executable="php">
+            <arg line="Tests/app/console" />
+            <arg line="doctrine:schema:create" />
+        </exec>
+        <exec executable="php">
+            <arg line="Tests/app/console" />
+            <arg line="doctrine:fixtures:load" />
+        </exec>
+    </target>
+
+    <!--<target name="tests" depends="phpunit,phpunit-report,coverage" />-->
+    <target name="tests" depends="integration" />
+
+    <target name="phpunit" description="PHPUnit">
+      <exec executable="phpunit" failonerror="true" osfamily="unix">
+        <arg line="--configuration phpunit.xml.dist" />
+        <arg line="--log-junit ${build}/logs/phpunit.xml" />
+        <arg line="--coverage-html ${build}/coverage/phpunit" />
+        <arg line="--verbose" />
+        <arg line="--debug" />
+      </exec>
+      <available file="${build}/logs/phpunit.xml" property="phpunit.xml" />
+      <available file="${build}/coverage/phpunit" type="dir" property="phpunit.coverage" />
+    </target>
+
+    <target name="phpunit-xsl" description="Get phpunit to junit xsl" unless="phpunit_to_junit">
+      <exec executable="wget">
+        <arg line="http://d.whysofast.ru/phpunit_to_junit.xsl" />
+      </exec>
+    </target>
+    
+    <target name="phpunit-report" description="Convert phpunit.xml to junit.xml" depends="phpunit-xsl" if="phpunit.xml">
+        <xslt in="${build}/logs/phpunit.xml" out="${build}/logs/junit.xml" style="${basedir}/phpunit_to_junit.xsl"/>
+        <echo message="##teamcity[importData type='junit' path='${build}/logs/junit.xml']" />        
+    </target>
+
+    <target name="coverage" description="Import code coverage" if="phpunit.coverage" >
+        <zip destfile="${build}/logs/coverage.zip" basedir="${build}/coverage/phpunit"/>
+        <delete dir="${build}/coverage/phpunit"/>       
+        <echo message="##teamcity[publishArtifacts '${build}/logs/coverage.zip']" /> 
+    </target>
+    
+    <target name="integration" description="Run integration tests">
+      <exec executable="php" failonerror="true" osfamily="unix">
+        <arg line="vendor/behat/behat/bin/behat" />
+        <arg line="--format pretty,junit" />
+        <arg line="--out ,.build/logs/integration" />
+        <arg line="--verbose" />
+      </exec>
+      <echo message="##teamcity[importData type='junit' path='${build}/logs/integration/*']" />        
+    </target>
+    
+    <target name="jasmine" description="Run jasmine bdd tests">
+        <exec executable="php" failonerror="true" osfamily="unix">
+            <arg line="Tests/app/console" />
+            <arg line="jasmine" />
+        </exec>
+    </target>
+
+    <target name="quality" description="Code quality" depends="phpmd,phpcpd,pdepend,phpcs,phploc,phpdcd,phpcb" />
+
+    <target name="phpmd" description="PHP Mess Detector" >
+        <exec executable="phpmd" failonerror="false" osfamily="unix">
+            <arg line="${basedir}" />
+            <arg line="xml" />
+            <arg line="naming,unusedcode,codesize" />
+            <arg line="--reportfile ${build}/phpmd.xml" />
+            <arg line="--exclude vendor/,Entity/,.tmp/,Tests/app/bundles/" /> <!-- Entity because traits bug -->
+        </exec>
+        <echo message="##teamcity[importData type='pmd' path='${build}/phpmd.xml']"/>        
+    </target>
+    
+    <target name="phpcpd" description="Copy/Paste Detector" >
+        <property name="phpcpd" value="${build}/logs/phpcpd.xml" />
+        <exec executable="phpcpd" failonerror="false" osfamily="unix">
+            <arg line="--log-pmd ${phpcpd}" />
+            <arg line="--exclude vendor/" />
+            <arg line="--exclude .tmp/" />
+            <arg line="--exclude Tests/app/bundles/" />
+            <arg line="${basedir}" />
+        </exec>
+        <echo message="##teamcity[importData type='pmdCpd' path='${phpcpd}']"/>
+        <echo message="##teamcity[publishArtifacts '${phpcpd}']" />
+    </target>
+    
+    <target name="pdepend" description="PHP_Depend" >
+        <!--
+        @todo Use configuration=<file> argument.
+        -->
+        <exec executable="pdepend" failonerror="false" osfamily="unix">
+            <arg line="--jdepend-chart=${build}/logs/pdepend/pdepend.jdepend.chart.png" />
+            <arg line="--jdepend-xml=${build}/logs/pdepend/pdepend.jdepend.xml"></arg>
+            <arg line="--overview-pyramid=${build}/logs/pdepend/pdepend.overview.pyramid.png"></arg>
+            <arg line="--summary-xml=${build}/logs/pdepend/pdepend.summary.xml"></arg>
+            <arg line="--coderank-mode=inheritance,property,method"></arg>
+            <arg line="--ignore=vendor/,Entity/,.tmp/,Tests/app/bundles/" /> <!-- Entity because traits bug -->
+            <arg line="${basedir}"></arg>
+        </exec>
+        <echo message="##teamcity[publishArtifacts '${build}/logs/pdepend/pdepend.jdepend.chart.png']" />
+        <echo message="##teamcity[publishArtifacts '${build}/logs/pdepend/pdepend.jdepend.xml']" />
+        <echo message="##teamcity[publishArtifacts '${build}/logs/pdepend/pdepend.overview.pyramid.png']" />
+        <echo message="##teamcity[publishArtifacts '${build}/logs/pdepend/pdepend.summary.xml']" />
+        <echo message="##teamcity[publishArtifacts '${build}/logs/pdepend/phpunit.clover.xml']" />
+    </target>
+       
+    <target name="phpcs" description="PHP_CodeSniffer" >
+        <property name="phpcs" value="${build}/logs/phpcs.xml" />
+        <exec executable="phpcs" failonerror="false" osfamily="unix">
+            <arg line="--tab-width=4" />
+            <arg line="--report=checkstyle" />
+            <arg line="--report-file=${phpcs}" />
+            <arg line="--standard=Symfony2" />
+            <arg line="--ignore=vendor/,.tmp/,Tests/app/bundles/" />
+            <arg line="${basedir}" />
+        </exec>
+        <echo message="##teamcity[importData type='checkstyle' path='${phpcs}']"/>
+    </target>           
+       
+    <target name="phploc" description="Tool for quickly measuring the size of a PHP project" >
+        <exec executable="phploc" failonerror="false" osfamily="unix">
+            <arg line="--count-tests" />
+            <arg line="--log-xml ${build}/logs/phploc.xml" />
+            <arg line="--exclude vendor/" />
+            <arg line="--exclude .tmp/" />
+            <arg line="--exclude Tests/app/bundles/" />
+            <arg line="${basedir}" />
+        </exec>
+        <echo message="##teamcity[publishArtifacts '${build}/logs/phploc.xml']" />
+    </target>
+ 
+    <target name="phpdcd" description="PHP Dead Code Detector" >
+        <exec executable="phpdcd" failonerror="false" osfamily="unix">
+            <arg line="--recursive" />
+            <arg line="--exclude vendor/" />
+            <arg line="--exclude .tmp/" />
+            <arg line="--exclude Tests/app/bundles/" />
+            <arg line="${basedir}" />
+        </exec>
+        <echo message="##teamcity[publishArtifacts '${build}/logs/phpdcd.txt']" />
+    </target>
+    
+    <target name="phpcb" description="PHP_CodeBrowser" >
+        <exec executable="phpcb" failonerror="false" osfamily="unix">
+            <arg line="--log ${build}/logs" />
+            <arg line="--source ${basedir}" />
+            <arg line="--output ${build}/coverage/phpcb" />
+            <arg line="--exclude ${basedir}/vendor*" />
+            <arg line="--exclude ${basedir}/Resources*" />
+            <arg line="--exclude ${basedir}/Tests/app/bundles" />
+            <arg line="--exclude ${basedir}/.tmp*" />
+            <arg line="--debugExcludes" />
+        </exec>
+        <zip destfile="${build}/logs/codebrowser.zip" basedir="${build}/coverage/phpcb" />
+        <echo message="##teamcity[publishArtifacts '${build}/logs/codebrowser.zip']" />
+        <delete dir="${build}/logs/phpcb"/>
+    </target>
+    
+    <target name="api" depends="js-api" />
+    
+    <target name="js-api" description="JavaScript application api">
+        <exec executable="php" failonerror="true" osfamily="unix">
+            <arg line="Tests/app/console" />
+            <arg line="extjs:doc" />
+            <arg line="--output ${build}/doc/js" />
+        </exec>
+        <zip destfile="${build}/doc/js.zip" basedir="${build}/doc/js"/>
+        <echo message="##teamcity[publishArtifacts '${build}/doc/js.zip']" />
+    </target>
+    
+    <target name="php-api" description="Generate Documentation" >
+        <exec executable="apigen" failonerror="false">
+            <arg line="--source ${basedir}" />
+            <arg line="--destination ${build}/doc/php" />
+            <arg line="--exclude ${build}/vendor" />
+            <arg line="--exclude ${build}/Tests" />
+            <arg line="--exclude ${build}/Resources" />
+            <arg line="--exclude ${build}/.tmp" />
+            <arg line="--exclude ${build}/Tests/app/bundles" />
+        </exec>
+        <zip destfile="${build}/doc/php.zip" basedir="${build}/doc/php"/>
+        <echo message="##teamcity[publishArtifacts '${build}/doc/php.zip']" />
+    </target>
+    
+</project>  
