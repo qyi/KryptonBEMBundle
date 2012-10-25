@@ -60,15 +60,15 @@ assetic:
 Configuration in your config.yml:
 
 # app/config/config.yml
-krypton_bem:
-    node_modules: /usr/local/lib/node_modules
-    bem_bl: %kernel.root_dir%/../../vendor/bem/bem-bl
-    levels:
-        - %kernel.root_dir%/../../vendor/bem/bem-bl/blocks-common
-        - %kernel.root_dir%/../../vendor/bem/bem-bl/blocks-desktop
-    filters:
-        bem: 
-            bin:        /usr/local/bin/bem
+    krypton_bem:
+        node_modules: /usr/local/lib/node_modules
+        bem_bl: %kernel.root_dir%/../../vendor/bem/bem-bl
+        levels:
+            - %kernel.root_dir%/../../vendor/bem/bem-bl/blocks-common
+            - %kernel.root_dir%/../../vendor/bem/bem-bl/blocks-desktop
+        filters:
+            bem: 
+                bin:        /usr/local/bin/bem
 
 ### Step 5: Install Bem tools
 
