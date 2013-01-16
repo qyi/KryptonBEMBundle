@@ -59,6 +59,7 @@ assetic:
 
 Configuration in your config.yml:
 
+``` YAML
 # app/config/config.yml
 krypton_bem:
     node_modules: /usr/local/lib/node_modules
@@ -69,6 +70,7 @@ krypton_bem:
     filters:
         bem: 
             bin:        /usr/local/bin/bem
+```
 
 ### Step 5: Install Bem tools
 
